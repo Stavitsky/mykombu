@@ -1,7 +1,8 @@
-from queues import queue_msg_1
+from queues import queues_mass
 from queues import task_exchange
 from kombu.mixins import ConsumerMixin
 from kombu.common import maybe_declare
+from kombu.common import send_reply
 from kombu.pools import producers
 
 
@@ -11,16 +12,18 @@ class S(ConsumerMixin):
         return
 
     def get_consumers(self, Consumer, channel):
-        return [Consumer(queue_msg_1, accept=['pickle'],
+        return [Consumer(queues_mass[0], accept=['json'],
                 callbacks=[self.on_message])]
 
     def on_message(self, body, message):
         print ("RECEIVED MSG FROM CLIENT - body: %r" % (body,))
         message.ack()
-        self.set_message()
+        self.set_message(message=message)
+        #json_arr="TEST REPLY"
+        #send_reply(task_exchange, message, json_arr)
         return
 
-    def set_message(self):
+    def set_message(self, message):
         json_arr = []
         qcow_info = {}
         qcow_info["filename"] = "/var/db/images/vm1/disk"
@@ -29,11 +32,9 @@ class S(ConsumerMixin):
 
         with producers[connection].acquire(block=True) as producer:
             maybe_declare(task_exchange, producer.channel)
-            payload = {"type": "back-message-from-s1", "content": json_arr}
-            producer.publish(payload, exchange=task_exchange,
-                             serializer="json", routing_key="TO_CLIENT")
+            send_reply(task_exchange, message, json_arr, producer=producer)
         return
-
+      
 
 if __name__ == "__main__":
     from kombu import BrokerConnection

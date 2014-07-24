@@ -1,4 +1,4 @@
-from queues import queue_msg_2
+from queues import queues_mass
 from queues import task_exchange
 from kombu.mixins import ConsumerMixin
 from kombu.common import maybe_declare
@@ -11,7 +11,7 @@ class S(ConsumerMixin):
         return
 
     def get_consumers(self, Consumer, channel):
-        return [Consumer(queue_msg_2, accept=['pickle'],
+        return [Consumer(queues_mass[1], accept=['json'],
                 callbacks=[self.on_message])]
 
     def on_message(self, body, message):
