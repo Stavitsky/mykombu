@@ -1,4 +1,6 @@
 from kombu import Exchange, Queue
+from kombu.pools import producers
+from kombu.common import maybe_declare
 
 
 task_exchange = Exchange("msgs", type="direct")
@@ -15,13 +17,12 @@ queue_msg_back = Queue("back", task_exchange, routing_key='TO_CLIENT')
 queues_mass = [queue_msg_1, queue_msg_2]
 
 
-def add_queue(uuid):
+def add_queue(uuid, connection):
 
-    queues_dict[str(uuid)] = Queue(str(uuid), task_exchange,
-                                   routing_key=str(uuid))
+    queues_dict[str(uuid)] = Queue(str(uuid), 
+                                   task_exchange,
+                                   routing_key=str(uuid),
+                                   auto_delete=True)
     print ("[!!!] in queues.add_queue()_CREATED QUENQUE %s" % (uuid))
-    print ("[!!!] queues_dict now: ")
-    for (name, queue) in queues_dict.items():
-        print name, queue
 
 #TODO: add delete

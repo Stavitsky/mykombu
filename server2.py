@@ -20,7 +20,7 @@ class S(ConsumerMixin):
         self.set_message()
         return
 
-    def set_message(self,message):
+    def set_message(self):
         with producers[connection].acquire(block=True) as producer:
             maybe_declare(task_exchange, producer.channel)
             payload = {"type": "back-message-from-s2", "content": "{qcow info}"}

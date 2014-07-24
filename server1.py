@@ -12,16 +12,20 @@ class S(ConsumerMixin):
         return
 
     def get_consumers(self, Consumer, channel):
-        return [Consumer(queues_dict['first_VM'], accept=['json'],
-                callbacks=[self.on_message])]
+        return [Consumer(queues_dict['first_VM'],
+                accept=['json'],
+                callbacks=[self.on_message],
+                auto_declare=False)]
 
     def on_message(self, body, message):
+        print ("[CATCHED METHOD] on_message()")
         print ("RECEIVED MSG FROM CLIENT - body: %r" % (body,))
         message.ack()
         self.set_message(message=message)
         return
 
     def set_message(self, message):
+        print ("[CATCHED METHOD] set_message()")
         json_arr = []
         qcow_info = {}
         qcow_info["filename"] = "/var/db/images/vm1/disk"
@@ -30,7 +34,9 @@ class S(ConsumerMixin):
 
         with producers[connection].acquire(block=True) as producer:
             maybe_declare(task_exchange, producer.channel)
+            print("[!!!] Before send_reply()")
             send_reply(task_exchange, message, json_arr, producer=producer)
+            print("[!!!] After send_reply()")
         return
 
 if __name__ == "__main__":
