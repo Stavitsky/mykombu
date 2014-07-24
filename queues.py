@@ -20,5 +20,8 @@ def add_queue(uuid):
     queues_dict[str(uuid)] = Queue(str(uuid), task_exchange,
                                    routing_key=str(uuid))
     print ("[!!!] in queues.add_queue()_CREATED QUENQUE %s" % (uuid))
+    print ("[!!!] queues_dict now: ")
+    for (name, queue) in queues_dict.items():
+        print name, queue
 
 #TODO: add delete

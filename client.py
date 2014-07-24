@@ -14,16 +14,51 @@ import json
 
 
 class C(ConsumerMixin):
-    def __init__(self, connection):
+    def __init__(self, connection, call_id):
         self.connection = connection
+        self.id = str(call_id)
+        self.send_message()
         return
 
-    def get_consumers(self, Consumer, channel):
-        print ("[!!!] get_consumers() catched!")
-        print ("[!!!] call_id here: "+call_id)
+    def get_consumers(self, Consumer, channel, call_id=None):
+        if call_id is None:
+            call_id = self.id
+
+        print ("[!!!] TRY TO HEAR call_id: "+call_id)
         return [Consumer(queues_dict[call_id],
                          accept=['json'],
                          callbacks=[self.on_message])]
+
+    def send_message(self, connection=None, call_id=None):
+        if call_id is None:
+            call_id = self.id
+
+        if connection is None:
+            connection = self.connection
+
+        add_queue(call_id) 
+
+        with producers[connection].acquire(block=True) as producer:
+            maybe_declare(task_exchange, producer.channel)
+
+            payload = {"type": "handshake",
+                       "content": "hello serv#1"}
+
+            producer.publish(payload,
+                             exchange="msgs",
+                             serializer="json",
+                             routing_key='TO_SERV_1',
+                             correlation_id=call_id,
+                             reply_to=call_id)
+            print("[!!!] reply_to: " + call_id)
+
+            payload = {"type": "handshake",
+                       "content": "hello serv#2"}
+
+            producer.publish(payload,
+                             exchange='msgs',
+                             serializer="json",
+                             routing_key='TO_SERV_2')
 
     def on_message(self, body, message):
         print ("RECEIVED MSG FROM SERVER - body: %r" % (body,))
@@ -37,12 +72,19 @@ class C(ConsumerMixin):
 
         return
 
+
+
 if __name__ == "__main__":
     from kombu import BrokerConnection
 
     call_id = str(uuid4())
-    add_queue(call_id)
+    with BrokerConnection("amqp://guest:guest@localhost:5672//") as connection:
+        try:
+            C(connection, call_id).run()
+        except KeyboardInterrupt:
+            print("bye bye")
 
+            """  
     connection = BrokerConnection("amqp://guest:guest@localhost:5672//")
 
     with producers[connection].acquire(block=True) as producer:
@@ -66,9 +108,4 @@ if __name__ == "__main__":
                          exchange='msgs',
                          serializer="json",
                          routing_key='TO_SERV_2')
-
-        with BrokerConnection("amqp://guest:guest@localhost:5672//") as connection:
-            try:
-                C(connection).run()
-            except KeyboardInterrupt:
-                print("bye bye")
+"""
