@@ -1,4 +1,4 @@
-from queues import queues_mass
+from queues import queues_dict
 from queues import task_exchange
 from kombu.mixins import ConsumerMixin
 from kombu.common import maybe_declare
@@ -12,15 +12,13 @@ class S(ConsumerMixin):
         return
 
     def get_consumers(self, Consumer, channel):
-        return [Consumer(queues_mass[0], accept=['json'],
+        return [Consumer(queues_dict['first_VM'], accept=['json'],
                 callbacks=[self.on_message])]
 
     def on_message(self, body, message):
         print ("RECEIVED MSG FROM CLIENT - body: %r" % (body,))
         message.ack()
         self.set_message(message=message)
-        #json_arr="TEST REPLY"
-        #send_reply(task_exchange, message, json_arr)
         return
 
     def set_message(self, message):
@@ -34,7 +32,6 @@ class S(ConsumerMixin):
             maybe_declare(task_exchange, producer.channel)
             send_reply(task_exchange, message, json_arr, producer=producer)
         return
-      
 
 if __name__ == "__main__":
     from kombu import BrokerConnection
