@@ -4,18 +4,26 @@ from kombu.mixins import ConsumerMixin
 from kombu.common import maybe_declare
 from kombu.common import send_reply
 from kombu.pools import producers
+import logging
+import sys
 
+LOG = logging.getLogger(__package__)
+LOG.setLevel(logging.DEBUG)
+lh = logging.StreamHandler(sys.stdout)
+lh.setLevel(logging.DEBUG)
+LOG.addHandler(lh)
 
 class S(ConsumerMixin):
     def __init__(self, connection):
+        print ("[CATCHED METHOD]__init__()")
         self.connection = connection
         return
 
     def get_consumers(self, Consumer, channel):
+        print ("[CATCHED METHOD] get_consumers()")
         return [Consumer(queues_dict['first_VM'],
                 accept=['json'],
-                callbacks=[self.on_message],
-                auto_declare=False)]
+                callbacks=[self.on_message])]
 
     def on_message(self, body, message):
         print ("[CATCHED METHOD] on_message()")
@@ -33,7 +41,8 @@ class S(ConsumerMixin):
         json_arr.append(qcow_info)
 
         with producers[connection].acquire(block=True) as producer:
-            maybe_declare(task_exchange, producer.channel)
+            #get producer from pool
+
             print("[!!!] Before send_reply()")
             send_reply(task_exchange, message, json_arr, producer=producer)
             print("[!!!] After send_reply()")
@@ -43,7 +52,7 @@ if __name__ == "__main__":
     from kombu import BrokerConnection
     from kombu.utils.debug import setup_logging
 
-    setup_logging(loglevel="DEBUG")
+    setup_logging(loggers=['kombu'])
 
     with BrokerConnection("amqp://guest:guest@localhost:5672//") as connection:
         try:
