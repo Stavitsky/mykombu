@@ -7,12 +7,17 @@ from kombu.common import maybe_declare
 from kombu.common import drain_consumer
 from kombu import Connection
 
+from _librabbitmq import ConnectionError
 
 from uuid import uuid4
 
 import json
 
-
+URI = parsers.host
+PEER = parsers.peer
+COMMAND = parsers.command
+FILE = parsers.currentfile
+DIR = parsers.currentpath
 
 def rpc_call(uri="amqp://guest:guest@localhost:5672//", peer='TO_SERV_1',
              fname="parse_dirs()", *args, **kwargs):
@@ -33,7 +38,12 @@ def rpc_call(uri="amqp://guest:guest@localhost:5672//", peer='TO_SERV_1',
     print ("[X] BACK QUEUE CREATED!")
     with Connection(uri) as connection:
         with connection.Producer() as producer:
-            maybe_declare(answer_queue, producer.channel)
+            try:
+                maybe_declare(answer_queue, producer.channel)
+            except ConnectionError as cerr:
+                print("[ERROR] %s . HOST:'%s'" % (cerr.message.upper(), URI))
+                print("---------------------------------")
+                return
             producer.publish(payload,
                              serializer='json',
                              exchange=task_exchange,
@@ -46,15 +56,19 @@ def rpc_call(uri="amqp://guest:guest@localhost:5672//", peer='TO_SERV_1',
                 print ("[X] Answer catched. \nBody:".upper())
                 msg.ack()
                 print body
+                if COMMAND == 'write':
+                    with open(FILE, 'w') as outfile:
+                        json.dump(body, outfile, indent=3)
+                    print ("[X] DATA WROTE TO FILE (%s)." % (FILE))
+                if COMMAND == 'check':
+                    print ("[X] HERE MUST BE CHECKING RESULT")
+
                 print("---------------------------------")
 
 
+def main():
+    rpc_call(uri=URI, peer=PEER, folder=DIR)
+
+
 if __name__ == "__main__":
-
-    URI = parsers.host
-    PEER = parsers.peer
-    COMMAND = parsers.command
-    FILE = parsers.currentfile
-    DIR = parsers.currentpath
-
-    rpc_call(uri=URI,peer=PEER,folder=DIR)
+    main()
