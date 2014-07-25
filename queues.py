@@ -19,6 +19,6 @@ def add_queue(uuid, connection):
                                    task_exchange,
                                    routing_key=str(uuid),
                                    auto_delete=True)
-    print ("[!!!] in queues.add_queue()_CREATED QUENQUE %s" % (uuid))
+    print ("[X] CREATED QUENQUE %s" % (uuid))
 
 #TODO: add delete

@@ -1,7 +1,7 @@
 from __future__ import with_statement
 from queues import task_exchange
 from kombu import Queue
-import parsers
+import parsers.client as cpars
 
 from kombu.common import maybe_declare
 from kombu.common import drain_consumer
@@ -13,14 +13,15 @@ from uuid import uuid4
 
 import json
 
-URI = parsers.host
-PEER = parsers.peer
-COMMAND = parsers.command
-FILE = parsers.currentfile
-DIR = parsers.currentpath
+URI = cpars.host
+PEER = cpars.peer
+COMMAND = cpars.command
+FILE = cpars.currentfile
+DIR = cpars.currentpath
+
 
 def rpc_call(uri="amqp://guest:guest@localhost:5672//", peer='TO_SERV_1',
-             fname="parse_dirs()", *args, **kwargs):
+             fname="parse_dirs", *args, **kwargs):
 
     payload = {'fname': fname}
     if args:

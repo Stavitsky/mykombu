@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # Filename: parsers.py
 
-import argparse #for parsing of argumenets
+import argparse  # for parsing of argumenets
 import sys
 
 
@@ -15,8 +15,8 @@ def create_parser():
     parser.add_argument('-u', '--uri',
                         default='amqp://guest:guest@localhost:5672//',
                         help='param of host connection')
-    parser.add_argument('-p', '--peer',
-                        default='TO_SERV_1')
+    parser.add_argument('-p', '--peer', help='peer name to send message',
+                        required=True)
     parser.add_argument('-c', '--command', choices=['check', 'write'],
                         default='write',
                         help='what action to do with qcow info')
@@ -31,4 +31,4 @@ command = format(namespace.command)
 currentpath = format(namespace.directory)
 currentfile = format(namespace.file)
 
-# End of parsers.py    
+# End of parsers.py
