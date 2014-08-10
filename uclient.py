@@ -1,5 +1,5 @@
 from __future__ import with_statement
-from queues import task_exchange
+from userv import TASK_EXCHANGE
 from kombu import Queue
 import parsers.client as cpars
 
@@ -31,7 +31,7 @@ def rpc_call(uri="amqp://guest:guest@localhost:5672//", peer='TO_SERV_1',
 
     call_id = str(uuid4())
     answer_queue = Queue(call_id,
-                         task_exchange,
+                         TASK_EXCHANGE,
                          routing_key=call_id,
                          auto_delete=True,
                          durable=False)
@@ -47,7 +47,7 @@ def rpc_call(uri="amqp://guest:guest@localhost:5672//", peer='TO_SERV_1',
                 return
             producer.publish(payload,
                              serializer='json',
-                             exchange=task_exchange,
+                             exchange=TASK_EXCHANGE,
                              routing_key=peer,
                              correlation_id='corr1',
                              reply_to=call_id)
